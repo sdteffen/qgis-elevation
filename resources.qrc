@@ -1,0 +1,6 @@
+<RCC>
+	<qresource prefix="/plugins/elevation">
+		<file>about_icon.png</file>
+		<file>elevation_icon.png</file>
+	</qresource>
+</RCC>
