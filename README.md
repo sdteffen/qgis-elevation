@@ -15,6 +15,6 @@ Installation
 ============
 
 The installation can be installed by selecting Plugins->Fetch Python Plugins... from the menu.
-The Elevation plugin is available in the QGIS Contributed Repository.
+The Elevation plugin is available in the QGIS Official Repository 2.
 
 Installation from the source tarball is also possible.
