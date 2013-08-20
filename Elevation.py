@@ -4,7 +4,7 @@
 #
 # Elevation.py - load Elevation class from file Elevation.py
 #
-# Copyright 2010 Steffen Macke <sdteffen@sdteffen.de>
+# Copyright 2010, 2013 Steffen Macke <sdteffen@sdteffen.de>
 #
 # The QGIS Elevation plugin is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public
@@ -63,7 +63,7 @@ class Elevation:
 		self.iface.removeToolBarIcon(self.obtainAction)
 	
 	def about(self):
-		infoString = QString(QCoreApplication.translate('Elevation', "QGIS Elevation Plugin<br />This plugin allows to mark point elevations in Google Maps.<br />Copyright (c) 2010 Steffen Macke<br /><a href=\"http://polylinie.de/elevation\">polylinie.de/elevation</a><br/>In order to use, you have to accept the <a href=\"http://code.google.com/intl/en/apis/maps/terms.html\">Google Maps APIs Terms of Service</a>\n"))
+		infoString = QString(QCoreApplication.translate('Elevation', "QGIS Elevation Plugin<br />This plugin allows to mark point elevations in Google Maps.<br />Copyright (c) 2010, 2013 Steffen Macke<br /><a href=\"http://polylinie.de/elevation\">polylinie.de/elevation</a><br/>In order to use, you have to accept the <a href=\"http://code.google.com/intl/en/apis/maps/terms.html\">Google Maps APIs Terms of Service</a>\n"))
 		QMessageBox.information(self.iface.mainWindow(), "About Elevation", infoString)
 	
 	# Obtain elevation
@@ -80,44 +80,43 @@ class Elevation:
 	def obtain_action(self, point) :
 		try:
 			import simplejson
-			# reverse lat/lon
-			pt = pointToWGS84(point)
-			conn = httplib.HTTPConnection("maps.google.com")
+			epsg4326 = QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId)
+			reprojectgeographic = QgsCoordinateTransform(self.iface.mapCanvas().mapRenderer().destinationCrs(), epsg4326)			
+			pt = reprojectgeographic.transform(point)
+			conn = httplib.HTTPConnection("maps.googleapis.com")
 			conn.request("GET", "/maps/api/elevation/json?locations=" + str(pt[1])+","+str(pt[0])+"&sensor=false")
-			response = conn.getresponse()
-				
+			response = conn.getresponse()				
 			jsonresult = response.read()
-			elevation = int(round(simplejson.loads(jsonresult).get('results')[0].get('elevation')))
-			# save point
-			self.save_point(point, elevation)
-			#find marker
-			marker = 'http://bit.ly/aUwrKs'
-			for x in range(0, 1000):
-				if numericmarkers.numericmarkers.has_key(elevation+x) :
-					marker = numericmarkers.numericmarkers.get(elevation+x)
-					break
-				if numericmarkers.numericmarkers.has_key(elevation-x):
-					marker = numericmarkers.numericmarkers.get(elevation-x)
-					break
-			# create map
-			webbrowser.open('http://maps.google.com/maps/api/staticmap?size=512x512&maptype=terrain\&markers=icon:'+marker+'|'+str(pt[1])+','+str(pt[0])+'&mobile=true&sensor=false')	
+			results = simplejson.loads(jsonresult).get('results')
+			if 0 < len(results):
+				elevation = int(round(results[0].get('elevation')))
+				# save point
+				self.save_point(point, elevation)
+				#find marker
+				marker = 'http://bit.ly/aUwrKs'
+				for x in range(0, 1000):
+					if numericmarkers.numericmarkers.has_key(elevation+x) :
+						marker = numericmarkers.numericmarkers.get(elevation+x)
+						break
+					if numericmarkers.numericmarkers.has_key(elevation-x):
+						marker = numericmarkers.numericmarkers.get(elevation-x)
+						break
+				# create map
+				webbrowser.open('http://maps.google.com/maps/api/staticmap?size=512x512&maptype=terrain\&markers=icon:'+marker+'|'+str(pt[1])+','+str(pt[0])+'&mobile=true&sensor=false')
+			else:
+				QMessageBox.warning(self.iface.mainWindow(), 'Elevation', 'HTTP GET Request failed.', QMessageBox.Ok, QMessageBox.Ok)
 		except ImportError, e:
 			QCoreApplication.translate('Elevation', "'simplejson' module is required. Please install simplejson with 'easy_install simplejson'")
 		return 
  
 	# save point to file, point is in project's crs
 	def save_point(self, point, elevation):
-		qDebug('Saving point ' + str(point[1])  + ' ' + str(point[0]))
 		# create and add the point layer if not exists or not set
 		if not QgsMapLayerRegistry.instance().mapLayer(self.layerid) :
 			# create layer with same CRS as project
 			self.layer = QgsVectorLayer("Point", "Elevation Plugin Results", "memory")
+			self.layer.setCrs(self.iface.mapCanvas().mapRenderer().destinationCrs())
 			self.provider = self.layer.dataProvider()
-			p = QgsProject.instance()
-			(proj4string,ok) = p.readEntry("SpatialRefSys","ProjectCRSProj4String")
-			crs = QgsCoordinateReferenceSystem()
-			crs.createFromProj4(proj4string)
-			self.layer.setCrs(crs)
 
 			# add fields
 			self.provider.addAttributes( { "elevation" : "int" } )
@@ -150,9 +149,7 @@ class Elevation:
 	def check_settings (self) :
 		p = QgsProject.instance()
 		error = ''
-		(proj4string,ok) = p.readEntry("SpatialRefSys", "ProjectCRSProj4String")
-		if not ok :
-			error += unicode(QCoreApplication.translate('Elevation', "Project projection is not set: Elevation needs explicit projection set. Please set project CRS."))
+		proj4string = self.iface.mapCanvas().mapRenderer().destinationCrs().toProj4()
 			
 		try:
 			import simplejson  

@@ -1,4 +1,5 @@
-Quantum GIS Elevation plugin.
+Quantum GIS Elevation Plugin
+============================
 
 The QGIS Elevation Plugin is available from http://polylinie.de/elevation
 
@@ -11,8 +12,9 @@ Use of the extension requires acceptance of the Google Maps Terms of Service:
 http://code.google.com/intl/en/apis/maps/terms.html
 
 Installation
+============
 
-The installation can be installed using the Quantum GIS PluginInstaller from
-the "QGIS Contributed Repository".
+The installation can be installed by selecting Plugins->Fetch Python Plugins... from the menu.
+The Elevation plugin is available in the QGIS Official Repository 2.
 
 Installation from the source tarball is also possible.

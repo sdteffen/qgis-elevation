@@ -4,7 +4,7 @@
 #
 # __init__.py - load Elevation class from file Elevation.py
 #
-# Copyright 2010 Steffen Macke <sdteffen@sdteffen.de>
+# Copyright 2010, 2013 Steffen Macke <sdteffen@sdteffen.de>
 #
 # The QGIS Elevation plugin is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public
@@ -28,9 +28,9 @@ def name():
 def description():
 	return "Obtain and display point elevation data using Google Maps"
 def version(): 
-	return "Version 0.1.0" 
+	return "Version 0.2.0" 
 def qgisMinimumVersion():
-	return "1.0"
+	return "1.8"
 def classFactory(iface): 
 	# load Elevation class from file Elevation
 	from Elevation import Elevation 
