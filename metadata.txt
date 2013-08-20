@@ -1,0 +1,29 @@
+; the next section is mandatory
+[general]
+name=Elevation
+qgisMinimumVersion=1.8
+description=Obtain and display elevation points using the Google Maps API
+category=Vector
+version=version 0.2.0
+author=Steffen Macke
+email=sdteffen@gmail.com
+; end of mandatory metadata
+
+; start of optional metadata
+changelog=2013-08-20  Elevation 0.2.0:
+		Several updates and bug fixes
+
+; tags are in comma separated value format, spaces are allowed
+tags=elevation,point,click
+
+; these metadata can be empty
+homepage=http://polylinie.de/elevation/
+tracker=https://github.com/sdteffen/qgis-elevation/issues
+repository=https://github.com/sdteffen/qgis-elevation
+icon=elevation_icon.png
+
+; experimental flag
+experimental=False
+
+; deprecated flag (applies to the whole plugin and not only to the uploaded version)
+deprecated=False
