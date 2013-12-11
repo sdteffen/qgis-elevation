@@ -14,7 +14,7 @@ http://code.google.com/intl/en/apis/maps/terms.html
 Installation
 ============
 
-The installation can be installed by selecting Plugins->Fetch Python Plugins... from the menu.
-The Elevation plugin is available in the QGIS Official Repository 2.
+The installation can be installed by selecting Plugins->Manage and Install Plugins... from the menu
+followed by a click on "Get more".
 
 Installation from the source tarball is also possible.
