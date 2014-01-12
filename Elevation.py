@@ -28,8 +28,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 
-# Standard imports. simplejson is imported later
-import sys,os,httplib, webbrowser, urllib
+import sys, os, httplib, json, webbrowser, urllib
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
 # GeoCoding Utils
@@ -80,38 +79,33 @@ class Elevation:
 	def obtain_action(self, point) :
 		epsg4326 = QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId)
 		self.reprojectgeographic = QgsCoordinateTransform(self.iface.mapCanvas().mapRenderer().destinationCrs(), epsg4326)
+		pt = self.reprojectgeographic.transform(point)
+		conn = httplib.HTTPConnection("maps.googleapis.com")
+		QgsMessageLog.instance().logMessage( "http://maps.googleapis.com/maps/api/elevation/json?locations=" + str(pt[1])+","+str(pt[0])+"&sensor=false", "Elevation")
+		conn.request("GET", "/maps/api/elevation/json?locations=" + str(pt[1])+","+str(pt[0])+"&sensor=false")
+		response = conn.getresponse()				
+		jsonresult = response.read()
 		try:
-			import simplejson			
-			pt = self.reprojectgeographic.transform(point)
-			conn = httplib.HTTPConnection("maps.googleapis.com")
-			QgsMessageLog.instance().logMessage( "http://maps.googleapis.com/maps/api/elevation/json?locations=" + str(pt[1])+","+str(pt[0])+"&sensor=false", "Elevation")
-			conn.request("GET", "/maps/api/elevation/json?locations=" + str(pt[1])+","+str(pt[0])+"&sensor=false")
-			response = conn.getresponse()				
-			jsonresult = response.read()
-			try:
-				results = simplejson.loads(jsonresult).get('results')
-				if 0 < len(results):
-					elevation = int(round(results[0].get('elevation')))
-					# save point
-					self.save_point(point, elevation)
-					#find marker
-					marker = 'http://bit.ly/aUwrKs'
-					for x in range(0, 1000):
-						if numericmarkers.numericmarkers.has_key(elevation+x) :
-							marker = numericmarkers.numericmarkers.get(elevation+x)
-							break
-						if numericmarkers.numericmarkers.has_key(elevation-x):
-							marker = numericmarkers.numericmarkers.get(elevation-x)
-							break
-					# create map
-					webbrowser.open('http://maps.google.com/maps/api/staticmap?size=512x512&maptype=terrain\&markers=icon:'+marker+'|'+str(pt[1])+','+str(pt[0])+'&mobile=true&sensor=false')
-				else:
-					QMessageBox.warning(self.iface.mainWindow(), 'Elevation', 'HTTP GET Request failed.', QMessageBox.Ok, QMessageBox.Ok)
-			except ValueError, e:
-				QMessageBox.warning(self.iface.mainWindow(), 'Elevation', 'JSON decode failed: '+str(jsonresult), QMessageBox.Ok, QMessageBox.Ok)
-		except ImportError, e:
-			QCoreApplication.translate('Elevation', "'simplejson' module is required. Please install simplejson with 'easy_install simplejson'")
-		return 
+			results = json.loads(jsonresult).get('results')
+			if 0 < len(results):
+				elevation = int(round(results[0].get('elevation')))
+				# save point
+				self.save_point(point, elevation)
+				#find marker
+				marker = 'http://bit.ly/aUwrKs'
+				for x in range(0, 1000):
+					if numericmarkers.numericmarkers.has_key(elevation+x) :
+						marker = numericmarkers.numericmarkers.get(elevation+x)
+						break
+					if numericmarkers.numericmarkers.has_key(elevation-x):
+						marker = numericmarkers.numericmarkers.get(elevation-x)
+						break
+				# create map
+				webbrowser.open('http://maps.google.com/maps/api/staticmap?size=512x512&maptype=terrain\&markers=icon:'+marker+'|'+str(pt[1])+','+str(pt[0])+'&mobile=true&sensor=false')
+			else:
+				QMessageBox.warning(self.iface.mainWindow(), 'Elevation', 'HTTP GET Request failed.', QMessageBox.Ok, QMessageBox.Ok)
+		except ValueError, e:
+			QMessageBox.warning(self.iface.mainWindow(), 'Elevation', 'JSON decode failed: '+str(jsonresult), QMessageBox.Ok, QMessageBox.Ok)
  
 	# save point to file, point is in project's crs
 	def save_point(self, point, elevation):
@@ -154,12 +148,6 @@ class Elevation:
 		p = QgsProject.instance()
 		error = ''
 		proj4string = self.iface.mapCanvas().mapRenderer().destinationCrs().toProj4()
-			
-		try:
-			import simplejson  
-		except ImportError, e:
-			error += QCoreApplication.translate('Elevation', "'simplejson' module is required. Please install simplejson with 'easy_install simplejson'")
-			
 		return error
 
 if __name__ == "__main__":
