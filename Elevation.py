@@ -1,10 +1,9 @@
-#! /usr/bin/env python
 #
 # This file is part of the QGIS Elevation Plugin
 #
 # Elevation.py - load Elevation class from file Elevation.py
 #
-# Copyright 2010, 2013 Steffen Macke <sdteffen@sdteffen.de>
+# Copyright 2010, 2013, 2014 Steffen Macke <sdteffen@sdteffen.de>
 #
 # The QGIS Elevation plugin is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public
@@ -28,13 +27,14 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 
-import sys, os, httplib, json, webbrowser, urllib
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import sys, os, httplib, json, tempfile, urllib
 
 # GeoCoding Utils
 from Utils import *
 # Elevation imports
-import resources, numericmarkers
+from resources import *
+from numericmarkers import *
+from ImageDialog import *
 
 class Elevation: 
 
@@ -62,7 +62,7 @@ class Elevation:
 		self.iface.removeToolBarIcon(self.obtainAction)
 	
 	def about(self):
-		infoString = QCoreApplication.translate('Elevation', "QGIS Elevation Plugin 0.3.0<br />This plugin allows to mark point elevations in Google Maps.<br />Copyright (c) 2010, 2013 Steffen Macke<br /><a href=\"http://polylinie.de/elevation\">polylinie.de/elevation</a><br/>You have to accept the<br/><a href=\"http://code.google.com/intl/en/apis/maps/terms.html\">Google Maps APIs Terms of Service</a>\n")
+		infoString = QCoreApplication.translate('Elevation', "QGIS Elevation Plugin 0.4.0<br />This plugin allows to mark point elevations in Google Maps.<br />Copyright (c) 2010, 2013 Steffen Macke<br /><a href=\"http://polylinie.de/elevation\">polylinie.de/elevation</a><br/>You have to accept the<br/><a href=\"http://code.google.com/intl/en/apis/maps/terms.html\">Google Maps APIs Terms of Service</a>\n")
 		QMessageBox.information(self.iface.mainWindow(), "About Elevation", infoString)
 	
 	# Obtain elevation
@@ -94,14 +94,23 @@ class Elevation:
 				#find marker
 				marker = 'http://bit.ly/aUwrKs'
 				for x in range(0, 1000):
-					if numericmarkers.numericmarkers.has_key(elevation+x) :
-						marker = numericmarkers.numericmarkers.get(elevation+x)
+					if numericmarkers.has_key(elevation+x) :
+						marker = numericmarkers.get(elevation+x)
 						break
-					if numericmarkers.numericmarkers.has_key(elevation-x):
-						marker = numericmarkers.numericmarkers.get(elevation-x)
+					if numericmarkers.has_key(elevation-x):
+						marker = numericmarkers.get(elevation-x)
 						break
 				# create map
-				webbrowser.open('http://maps.google.com/maps/api/staticmap?size=512x512&maptype=terrain\&markers=icon:'+marker+'|'+str(pt[1])+','+str(pt[0])+'&mobile=true&sensor=false')
+				image = tempfile.mkstemp(suffix='png')
+				os.close(image[0])
+				urllib.urlretrieve('http://maps.google.com/maps/api/staticmap?size=640x480&maptype=terrain\&markers=icon:'+marker+'|'+str(pt[1])+','+str(pt[0])+'&mobile=true&sensor=false', image[1])
+				QgsMessageLog.instance().logMessage('http://maps.google.com/maps/api/staticmap?size=640x4802&maptype=terrain\&markers=icon:'+marker+'|'+str(pt[1])+','+str(pt[0])+'&mobile=true&sensor=false')
+				dlg = ImageDialog()
+				dlg.image.setPixmap(QPixmap(image[1]))
+				dlg.show()
+				dlg.exec_()
+				if os.path.exists(image[1]):
+					os.unlink(image[1])
 			else:
 				QMessageBox.warning(self.iface.mainWindow(), 'Elevation', 'HTTP GET Request failed.', QMessageBox.Ok, QMessageBox.Ok)
 		except ValueError, e:
@@ -117,6 +126,7 @@ class Elevation:
 
 			# add fields
 			self.provider.addAttributes( [QgsField("elevation", QVariant.Double)] )
+			self.layer.updateFields()
 
 			# Labels on
 			label = self.layer.label()

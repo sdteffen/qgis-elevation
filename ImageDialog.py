@@ -1,10 +1,9 @@
-#! /usr/bin/env python
 #
 # This file is part of the QGIS Elevation Plugin
 #
-# __init__.py - load Elevation class from file Elevation.py
+# ImageDialog.py - Display a simple dialog with an image  
 #
-# Copyright 2010, 2013, 2014 Steffen Macke <sdteffen@sdteffen.de>
+# Copyright 2014 Steffen Macke <sdteffen@sdteffen.de>
 #
 # The QGIS Elevation plugin is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public
@@ -21,17 +20,17 @@
 # write to the Free Software Foundation, Inc., 59 Temple Place
 # - Suite 330, Boston, MA 02111-1307, USA.
 #
-# The QGIS Python bindings are required to run this file
-# 
-def name(): 
-	return "Elevation" 
-def description():
-	return "Obtain and display point elevation data using Google Maps"
-def version(): 
-	return "Version 0.4.0" 
-def qgisMinimumVersion():
-	return "2.0"
-def classFactory(iface): 
-	# load Elevation class from file Elevation
-	from Elevation import Elevation 
-	return Elevation(iface)
+
+from PyQt4 import QtCore, QtGui
+
+class ImageDialog(QtGui.QDialog):
+	def setupUi(self):
+		self.setObjectName('Elevation')
+		self.resize(640,480)
+		self.image = QtGui.QLabel(self)
+		self.image.setGeometry(0,0,640,480)
+
+	def __init__(self):
+		QtGui.QDialog.__init__(self)
+		self.setupUi()
+
