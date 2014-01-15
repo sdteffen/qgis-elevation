@@ -4,13 +4,13 @@ name=Elevation
 qgisMinimumVersion=2.0
 description=Obtain and display elevation points using the Google Maps API
 category=Vector
-version=version 0.3.0
+version=version 0.4.0
 author=Steffen Macke
 email=sdteffen@gmail.com
 ; end of mandatory metadata
 
 ; start of optional metadata
-changelog=2014-01-12  Elevation 0.4.0:
+changelog=2014-01-15  Elevation 0.4.0:
 		Web browser is no longer required
 	2013-12-11  Elevation 0.3.0:
 		QGIS 2.0 updates
